@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:scribbletoart/services/drawing/drawing_point.dart';
 
 
 void main() {
@@ -23,6 +25,9 @@ class DrawingApp extends StatefulWidget {
 }
 
 class _DrawingAppState extends State<DrawingApp> {
+  DrawingPoint? point;
+  var drawingPointsHistory = <DrawingPoint>[];
+  var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
 
   @override
@@ -235,7 +240,13 @@ class _DrawingAppState extends State<DrawingApp> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: ListTile(
-                                    onTap: () {},
+                                    onTap: () {
+                                      if(drawingPoints.isNotEmpty && drawingPointsHistory.isNotEmpty) {
+                                        setState(() {
+                                          drawingPoints.removeLast();
+                                        });
+                                      }
+                                    },
                                     title: Text('Undo', style: TextStyle(color: Colors.white, fontFamily: 'Roboto')),
                                     trailing: Icon(Icons.undo, color: Colors.white,),
                                   ),
@@ -247,7 +258,12 @@ class _DrawingAppState extends State<DrawingApp> {
                                   ),
                                   child: ListTile(
                                     onTap: () {
-                          
+                                      if (drawingPoints.length < drawingPointsHistory.length) {
+                                        final index = drawingPoints.length;
+                                        setState(() {
+                                          drawingPoints.add(drawingPointsHistory[index]);
+                                        });
+                                      }
                                     },
                                     title: Text('Redo', style: TextStyle(color: Colors.white, fontFamily: 'Roboto')),
                                     trailing: Icon(Icons.redo, color: Colors.white,),
@@ -315,10 +331,40 @@ class _DrawingAppState extends State<DrawingApp> {
                             color: Color.fromRGBO(140, 101, 255, 100),
                           )
                         ),
-                        child: CustomPaint(
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height,
+                        child: GestureDetector(
+                          onPanStart: (details) {
+                            setState(() {
+                              point = DrawingPoint(
+                                drawingId: DateTime.now().millisecondsSinceEpoch,
+                                offsets: [details.localPosition],
+                              );
+
+                              if (point == null) return;
+                              drawingPoints.add(point!);
+                              drawingPointsHistory = List.of(drawingPoints);
+                            });
+                          },
+                          onPanUpdate: (details) {
+                            setState(() {
+                              if (point == null) return;
+
+                              point = point?.copyWith(
+                                  offsets: point!.offsets
+                                    ..add(details.localPosition)
+                              );
+                              drawingPoints.last = point!;
+                              drawingPointsHistory = List.of(drawingPoints);
+                            });
+                          },
+                          onPanEnd: (_) {
+                            point = null;
+                          },
+                          child: CustomPaint(
+                            painter: Painter(drawingPoints: drawingPoints),
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.height,
+                            ),
                           ),
                         ),
                       ),
@@ -335,4 +381,38 @@ class _DrawingAppState extends State<DrawingApp> {
 }
 
 
-// backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+class Painter extends CustomPainter {
+  final List<DrawingPoint> drawingPoints;
+
+  Painter({required this.drawingPoints});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var drawingPoint in drawingPoints) {
+      final paint = Paint();
+      paint.color = drawingPoint.color;
+      paint.isAntiAlias = true;
+      paint.strokeWidth = drawingPoint.strokeWidth;
+      paint.strokeCap = StrokeCap.round;
+
+      for (var i = 0; i < drawingPoint.offsets.length; i++) {
+        var lastOffset = i == drawingPoint.offsets.length - 1;
+
+        if (lastOffset) {
+          // No point drawn
+        } else {
+          final start = drawingPoint.offsets[i];
+          final end = drawingPoint.offsets[i+1];
+          canvas.drawLine(start, end, paint);
+        }
+
+      }
+
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
