@@ -29,6 +29,18 @@ class _DrawingAppState extends State<DrawingApp> {
   var drawingPointsHistory = <DrawingPoint>[];
   var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
+  var strokeColor = Colors.black;
+
+  var colors = <Color>[
+    Colors.black,
+    Colors.red,
+    Colors.yellow,
+    Colors.blue,
+    Colors.green,
+    Colors.purple,
+    Colors.orange,
+    Colors.pink,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -322,49 +334,87 @@ class _DrawingAppState extends State<DrawingApp> {
                       ],
                     ),
                     Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                          border: Border.all(
-                            width: 5,
-                            color: Color.fromRGBO(140, 101, 255, 100),
-                          )
-                        ),
-                        child: GestureDetector(
-                          onPanStart: (details) {
-                            setState(() {
-                              point = DrawingPoint(
-                                drawingId: DateTime.now().millisecondsSinceEpoch,
-                                offsets: [details.localPosition],
-                              );
+                      child: Scaffold(
+                        backgroundColor: Color.fromRGBO(220, 220, 228, 0),
+                        body: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.white,
+                            border: Border.all(
+                              width: 5,
+                              color: Color.fromRGBO(140, 101, 255, 100),
+                            )
+                          ),
+                          child: GestureDetector(
+                            onPanStart: (details) {
+                              setState(() {
+                                point = DrawingPoint(
+                                  drawingId: DateTime.now().millisecondsSinceEpoch,
+                                  offsets: [details.localPosition],
+                                  strokeColor: strokeColor,
+                                  strokeWidth: strokeWidth,
+                                );
 
-                              if (point == null) return;
-                              drawingPoints.add(point!);
-                              drawingPointsHistory = List.of(drawingPoints);
-                            });
-                          },
-                          onPanUpdate: (details) {
-                            setState(() {
-                              if (point == null) return;
+                                if (point == null) return;
+                                drawingPoints.add(point!);
+                                drawingPointsHistory = List.of(drawingPoints);
+                              });
+                            },
+                            onPanUpdate: (details) {
+                              setState(() {
+                                if (point == null) return;
 
-                              point = point?.copyWith(
-                                  offsets: point!.offsets
-                                    ..add(details.localPosition)
-                              );
-                              drawingPoints.last = point!;
-                              drawingPointsHistory = List.of(drawingPoints);
-                            });
-                          },
-                          onPanEnd: (_) {
-                            point = null;
-                          },
-                          child: CustomPaint(
-                            painter: Painter(drawingPoints: drawingPoints),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.height,
+                                point = point?.copyWith(
+                                    offsets: point!.offsets
+                                      ..add(details.localPosition)
+                                );
+                                drawingPoints.last = point!;
+                                drawingPointsHistory = List.of(drawingPoints);
+                              });
+                            },
+                            onPanEnd: (_) {
+                              point = null;
+                            },
+                            child: ClipRect(
+                              child: CustomPaint(
+                                painter: Painter(drawingPoints: drawingPoints),
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: MediaQuery.of(context).size.height,
+                                ),
+                              ),
                             ),
+                          ),
+                        ),
+                        floatingActionButton: Builder(builder: (context) {
+                          return FloatingActionButton(
+                            onPressed: () {
+                              Scaffold.of(context).openEndDrawer();
+                            },
+                            child: const Icon(Icons.color_lens_outlined),
+                          );
+                        }),
+                        endDrawer: Container(
+                          width: 100,
+                          child: Drawer(
+                            child: ListView.builder(
+                              itemCount: colors.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: ListTile(
+                                    onTap: () {
+                                      setState(() {
+                                        strokeColor = colors[index];
+                                        Navigator.of(context).pop();
+                                      });
+                                    },
+                                    tileColor: colors[index],
+                                    shape: const CircleBorder(),
+                                  ),
+                                );
+                              },
+                            )
                           ),
                         ),
                       ),
@@ -390,7 +440,7 @@ class Painter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var drawingPoint in drawingPoints) {
       final paint = Paint();
-      paint.color = drawingPoint.color;
+      paint.color = drawingPoint.strokeColor;
       paint.isAntiAlias = true;
       paint.strokeWidth = drawingPoint.strokeWidth;
       paint.strokeCap = StrokeCap.round;
