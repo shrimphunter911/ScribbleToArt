@@ -1,7 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:scribbletoart/services/drawing/drawing_point.dart';
+import 'dart:ui' as ui;
 
 
 void main() {
@@ -30,6 +35,7 @@ class _DrawingAppState extends State<DrawingApp> {
   var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
   var strokeColor = Colors.black;
+  GlobalKey globalKey = GlobalKey();
 
   var colors = <Color>[
     Colors.black,
@@ -41,6 +47,25 @@ class _DrawingAppState extends State<DrawingApp> {
     Colors.orange,
     Colors.pink,
   ];
+
+  Future<void> save() async {
+    RenderRepaintBoundary boundary = globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage();
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    if (!(await Permission.storage.status.isGranted)) {
+      await Permission.storage.request();
+    }
+
+    final result = await ImageGallerySaver.saveImage(
+      Uint8List.fromList(pngBytes),
+      quality: 60,
+      name: 'canvas_image'
+    );
+
+    print(result);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +351,9 @@ class _DrawingAppState extends State<DrawingApp> {
                           ),
                           child: TextButton(
                             onPressed: () {
-                          
+                              setState(() {
+                                save();
+                              });
                             },
                             child: Text('Download', style: TextStyle(color: Colors.white, fontFamily: 'Roboto'),),
                           ),
@@ -376,11 +403,14 @@ class _DrawingAppState extends State<DrawingApp> {
                               point = null;
                             },
                             child: ClipRect(
-                              child: CustomPaint(
-                                painter: Painter(drawingPoints: drawingPoints),
-                                child: SizedBox(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: MediaQuery.of(context).size.height,
+                              child: RepaintBoundary(
+                                key: globalKey,
+                                child: CustomPaint(
+                                  painter: Painter(drawingPoints: drawingPoints),
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width,
+                                    height: MediaQuery.of(context).size.height,
+                                  ),
                                 ),
                               ),
                             ),
@@ -438,6 +468,12 @@ class Painter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final backgroundColor = Paint();
+    backgroundColor.color = Colors.white;
+
+    Rect rect = Rect.largest;
+    canvas.drawRect(rect, backgroundColor);
+
     for (var drawingPoint in drawingPoints) {
       final paint = Paint();
       paint.color = drawingPoint.strokeColor;
