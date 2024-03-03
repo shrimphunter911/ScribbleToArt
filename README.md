@@ -1,16 +1,12 @@
-# scribbletoart
+# Scribble to Art Flutter App
 
-A new Flutter project.
+- Users can draw with their finger gestures.
+- Users can draw different shapes including Circle, Rectangle, Lines etc.
+- Users can use different colors, stroke widths.
+- Users can use eraser, undo, redo and clear the board.
+- Users can save their drawings in the image gallery.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+- Clone the project to your device and run command 'flutter pub get' to install all the necessary dependency
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.

@@ -22,48 +22,43 @@ class Painter extends CustomPainter {
     Rect rect = Rect.largest;
     canvas.drawRect(rect, backgroundColor);
 
+    final paint = Paint();
+    paint.isAntiAlias = true;
+    paint.strokeCap = StrokeCap.round;
+    paint.style = PaintingStyle.stroke;
 
-
+    // Drawing Rectangle
     for (var drawingRectangle in drawingRectangles) {
-      final paintRectangle = Paint();
-      paintRectangle.color = drawingRectangle.strokeColor;
-      paintRectangle.isAntiAlias = true;
-      paintRectangle.strokeWidth = drawingRectangle.strokeWidth;
-      paintRectangle.strokeCap = StrokeCap.round;
-      paintRectangle.style = PaintingStyle.stroke;
+      paint.color = drawingRectangle.strokeColor;
+      paint.strokeWidth = drawingRectangle.strokeWidth;
 
-      Rect rectangle = Rect.fromPoints(drawingRectangle.leftTop!, drawingRectangle.rightBottom!);
-      canvas.drawRect(rectangle, paintRectangle);
-
+      Rect rectangle = Rect.fromPoints(
+          drawingRectangle.leftTop!, drawingRectangle.rightBottom!);
+      canvas.drawRect(rectangle, paint);
     }
 
+    // Drawing Circles
     for (var drawingCircle in drawingCircles) {
-      final paintCircle = Paint();
-      paintCircle.color = drawingCircle.strokeColor;
-      paintCircle.isAntiAlias = true;
-      paintCircle.strokeWidth = drawingCircle.strokeWidth;
-      paintCircle.strokeCap = StrokeCap.round;
-      paintCircle.style = PaintingStyle.stroke;
+      paint.color = drawingCircle.strokeColor;
+      paint.strokeWidth = drawingCircle.strokeWidth;
 
-      canvas.drawCircle(drawingCircle.centre!, drawingCircle.radius, paintCircle);
+      canvas.drawCircle(
+          drawingCircle.centre!, drawingCircle.radius, paint);
     }
 
+    // Drawing Lines
     for (var drawingLine in drawingLines) {
-      final paintLine = Paint();
-      paintLine.color = drawingLine.strokeColor;
-      paintLine.isAntiAlias = true;
-      paintLine.strokeWidth = drawingLine.strokeWidth;
-      paintLine.strokeCap = StrokeCap.round;
+      paint.color = drawingLine.strokeColor;
+      paint.strokeWidth = drawingLine.strokeWidth;
 
-      canvas.drawLine(drawingLine.start!, drawingLine.end!, paintLine);
+      canvas.drawLine(drawingLine.start!, drawingLine.end!, paint);
     }
 
+    // Drawing Strokes
     for (var drawingPoint in drawingPoints) {
-      final paint = Paint();
       paint.color = drawingPoint.strokeColor;
-      paint.isAntiAlias = true;
       paint.strokeWidth = drawingPoint.strokeWidth;
-      paint.strokeCap = StrokeCap.round;
+
 
       for (var i = 0; i < drawingPoint.offsets.length; i++) {
         var lastOffset = i == drawingPoint.offsets.length - 1;
@@ -72,12 +67,10 @@ class Painter extends CustomPainter {
           // No point drawn
         } else {
           final start = drawingPoint.offsets[i];
-          final end = drawingPoint.offsets[i+1];
+          final end = drawingPoint.offsets[i + 1];
           canvas.drawLine(start, end, paint);
         }
-
       }
-
     }
   }
 

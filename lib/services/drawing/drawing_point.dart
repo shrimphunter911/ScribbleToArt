@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-class DrawingPoint{
+// Stroke Class
+class DrawingPoint {
   int drawingId;
   List<Offset> offsets;
   Color strokeColor;
@@ -23,10 +22,9 @@ class DrawingPoint{
       offsets: offsets ?? this.offsets,
     );
   }
-
 }
 
-class DrawingCircle{
+class DrawingCircle {
   int drawingId;
   Offset? centre;
   double radius;
@@ -46,7 +44,7 @@ class DrawingCircle{
   }
 }
 
-class DrawingRectangle{
+class DrawingRectangle {
   int drawingId;
   Offset? leftTop;
   Offset? rightBottom;
@@ -66,7 +64,7 @@ class DrawingRectangle{
   }
 }
 
-class DrawingLine{
+class DrawingLine {
   int drawingId;
   Offset? start;
   Offset? end;
