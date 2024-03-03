@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class DrawingPoint{
@@ -41,5 +43,45 @@ class DrawingCircle{
 
   void updateRadius(double rad) {
     radius = rad;
+  }
+}
+
+class DrawingRectangle{
+  int drawingId;
+  Offset? leftTop;
+  Offset? rightBottom;
+  Color strokeColor;
+  double strokeWidth;
+
+  DrawingRectangle({
+    this.drawingId = -1,
+    this.leftTop,
+    this.rightBottom,
+    this.strokeColor = Colors.black,
+    this.strokeWidth = 2.0,
+  });
+
+  void updateRadius(Offset newEdge) {
+    rightBottom = newEdge;
+  }
+}
+
+class DrawingLine{
+  int drawingId;
+  Offset? start;
+  Offset? end;
+  Color strokeColor;
+  double strokeWidth;
+
+  DrawingLine({
+    this.drawingId = -1,
+    this.start,
+    this.end,
+    this.strokeWidth = 2.0,
+    this.strokeColor = Colors.black,
+  });
+
+  void updateEnd(Offset newEnd) {
+    end = newEnd;
   }
 }

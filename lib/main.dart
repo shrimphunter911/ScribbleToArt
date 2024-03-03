@@ -35,7 +35,11 @@ class DrawingApp extends StatefulWidget {
 class _DrawingAppState extends State<DrawingApp> {
   DrawingPoint? point;
   DrawingCircle? circle;
+  DrawingRectangle? rectangle;
+  DrawingLine? line;
+  var drawingLines = <DrawingLine>[];
   var drawingCircles = <DrawingCircle>[];
+  var drawingRectangles = <DrawingRectangle>[];
   var drawingPointsHistory = <DrawingPoint>[];
   var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
@@ -108,6 +112,7 @@ class _DrawingAppState extends State<DrawingApp> {
                     icon: Image.asset('assets/imageIcons/eraser.png'),
                     onPressed: () {
                       setState(() {
+                        strokeType = StrokeType.stroke;
                         strokeColor = Colors.white;
                       });
                     },
@@ -176,7 +181,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: SvgPicture.asset('assets/imageIcons/line.svg', height: 50, width: 50,),
                     onPressed: () {
-
+                      setState(() {
+                        strokeType = StrokeType.line;
+                      });
                     },
                   ),
                 ),
@@ -216,7 +223,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: SvgPicture.asset('assets/imageIcons/rectangle.svg', height: 50, width: 50,),
                     onPressed: () {
-
+                      setState(() {
+                        strokeType = StrokeType.rectangle;
+                      });
                     },
                   ),
                 ),
@@ -318,6 +327,9 @@ class _DrawingAppState extends State<DrawingApp> {
                                     onTap: () {
                                       setState(() {
                                         drawingPoints.clear();
+                                        drawingCircles.clear();
+                                        drawingRectangles.clear();
+                                        drawingLines.clear();
                                       });
                                     },
                                     title: Text('Clear', style: TextStyle(color: Colors.white, fontFamily: 'Roboto')),
@@ -380,6 +392,19 @@ class _DrawingAppState extends State<DrawingApp> {
                           child: GestureDetector(
                             onPanStart: (details) {
                               switch (strokeType) {
+                                case StrokeType.line:
+                                  setState(() {
+                                    line = DrawingLine(
+                                      drawingId: DateTime.now().millisecondsSinceEpoch,
+                                      start: details.localPosition,
+                                      end: details.localPosition,
+                                      strokeWidth: strokeWidth,
+                                      strokeColor: strokeColor,
+                                    );
+
+                                    if (line == null) return;
+                                    drawingLines.add(line!);
+                                  });
                                 case StrokeType.circle:
                                   setState(() {
                                     // Creating circle object
@@ -394,6 +419,21 @@ class _DrawingAppState extends State<DrawingApp> {
                                     drawingCircles.add(circle!);
 
                                   });
+
+                                case StrokeType.rectangle:
+                                  setState(() {
+                                    rectangle = DrawingRectangle(
+                                      drawingId: DateTime.now().millisecondsSinceEpoch,
+                                      leftTop: details.localPosition,
+                                      rightBottom: details.localPosition,
+                                      strokeColor: strokeColor,
+                                      strokeWidth: strokeWidth,
+                                    );
+
+                                    if (rectangle == null) return;
+                                    drawingRectangles.add(rectangle!);
+                                  });
+
                                 case StrokeType.stroke:
                                 default:
                                   setState(() {
@@ -412,6 +452,13 @@ class _DrawingAppState extends State<DrawingApp> {
                              },
                             onPanUpdate: (details) {
                               switch (strokeType) {
+                                case StrokeType.line:
+                                  setState(() {
+                                    if (line == null) return;
+                                    Offset end = details.localPosition;
+                                    line?.updateEnd(end);
+                                    drawingLines.last = line!;
+                                  });
                                 case StrokeType.circle:
                                   setState(() {
                                     if (circle == null) return;
@@ -422,6 +469,15 @@ class _DrawingAppState extends State<DrawingApp> {
                                     drawingCircles.last = circle!;
 
                                   });
+
+                                case StrokeType.rectangle:
+                                  setState(() {
+                                    if (rectangle == null) return;
+                                    Offset bottomRight = details.localPosition;
+                                    rectangle?.updateRadius(bottomRight);
+                                    drawingRectangles.last = rectangle!;
+                                  });
+
                                 case StrokeType.stroke:
                                 default:
                                   setState(() {
@@ -439,12 +495,18 @@ class _DrawingAppState extends State<DrawingApp> {
                             onPanEnd: (_) {
                               point = null;
                               circle = null;
+                              rectangle = null;
+                              line = null;
                             },
                             child: ClipRect(
                               child: RepaintBoundary(
                                 key: globalKey,
                                 child: CustomPaint(
-                                  painter: Painter(drawingPoints: drawingPoints, drawingCircles: drawingCircles),
+                                  painter: Painter(drawingPoints: drawingPoints,
+                                    drawingCircles: drawingCircles,
+                                    drawingRectangles: drawingRectangles,
+                                    drawingLines: drawingLines,
+                                  ),
                                   child: SizedBox(
                                     width: MediaQuery.of(context).size.width,
                                     height: MediaQuery.of(context).size.height,
