@@ -10,3 +10,10 @@
 
 - Clone the project to your device and run command 'flutter pub get' to install all the necessary dependency
 
+## User Interface of the App
+
+![](assets/imageIcons/Screenshot%202024-03-04%20035408.png)
+
+## YouTube Demonstration
+
+- https://youtu.be/YsqTUc3-7fo
