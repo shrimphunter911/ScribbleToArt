@@ -40,11 +40,13 @@ class _DrawingAppState extends State<DrawingApp> {
   var drawingLines = <DrawingLine>[];
   var drawingCircles = <DrawingCircle>[];
   var drawingRectangles = <DrawingRectangle>[];
-  var drawingPointsHistory = <DrawingPoint>[];
+  var drawingPointsHistory = <dynamic>[];
+  var drawingPointsFuture = <dynamic>[];
   var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
   var strokeColor = Colors.black;
   var strokeType = StrokeType.stroke;
+  var future;
   GlobalKey globalKey = GlobalKey();
 
   Future<void> save() async {
@@ -290,9 +292,31 @@ class _DrawingAppState extends State<DrawingApp> {
                                   ),
                                   child: ListTile(
                                     onTap: () {
-                                      if(drawingPoints.isNotEmpty && drawingPointsHistory.isNotEmpty) {
+                                      if(drawingPointsHistory.isNotEmpty) {
                                         setState(() {
-                                          drawingPoints.removeLast();
+                                          if (drawingPointsHistory.last is DrawingPoint && drawingPoints.isNotEmpty) {
+                                            drawingPoints.removeLast();
+                                            future = drawingPointsHistory.last;
+                                            drawingPointsHistory.removeLast();
+                                            drawingPointsFuture.add(future);
+                                          } else if(drawingPointsHistory.last is DrawingCircle && drawingCircles.isNotEmpty) {
+                                            drawingCircles.removeLast();
+                                            future = drawingPointsHistory.last;
+                                            drawingPointsHistory.removeLast();
+                                            drawingPointsFuture.add(future);
+                                          } else if(drawingPointsHistory.last is DrawingRectangle && drawingRectangles.isNotEmpty) {
+                                            drawingRectangles.removeLast();
+                                            future = drawingPointsHistory.last;
+                                            drawingPointsHistory.removeLast();
+                                            drawingPointsFuture.add(future);
+                                          } else if (drawingPointsHistory.last is DrawingLine && drawingLines.isNotEmpty) {
+                                            drawingLines.removeLast();
+                                            future = drawingPointsHistory.last;
+                                            drawingPointsHistory.removeLast();
+                                            drawingPointsFuture.add(future);
+                                          } else {
+                                            // Won't do anything
+                                          }
                                         });
                                       }
                                     },
@@ -307,12 +331,33 @@ class _DrawingAppState extends State<DrawingApp> {
                                   ),
                                   child: ListTile(
                                     onTap: () {
-                                      if (drawingPoints.length < drawingPointsHistory.length) {
-                                        final index = drawingPoints.length;
-                                        setState(() {
-                                          drawingPoints.add(drawingPointsHistory[index]);
-                                        });
-                                      }
+                                      setState(() {
+                                        if(drawingPointsFuture.isNotEmpty) {
+                                          if (drawingPointsFuture.last is DrawingPoint) {
+                                            future = drawingPointsFuture.last;
+                                            drawingPointsFuture.removeLast();
+                                            drawingPoints.add(future);
+                                            drawingPointsHistory.add(future);
+                                          } else if (drawingPointsFuture.last is DrawingCircle) {
+                                            future = drawingPointsFuture.last;
+                                            drawingPointsFuture.removeLast();
+                                            drawingCircles.add(future);
+                                            drawingPointsHistory.add(future);
+                                          } else if (drawingPointsFuture.last is DrawingRectangle) {
+                                            future = drawingPointsFuture.last;
+                                            drawingPointsFuture.removeLast();
+                                            drawingRectangles.add(future);
+                                            drawingPointsHistory.add(future);
+                                          } else if (drawingPointsFuture.last is DrawingLine) {
+                                            future = drawingPointsFuture.last;
+                                            drawingPointsFuture.removeLast();
+                                            drawingLines.add(future);
+                                            drawingPointsHistory.add(future);
+                                          } else {
+                                            // Won't do anything
+                                          }
+                                        }
+                                      });
                                     },
                                     title: Text('Redo', style: TextStyle(color: Colors.white, fontFamily: 'Roboto')),
                                     trailing: Icon(Icons.redo, color: Colors.white,),
@@ -404,6 +449,7 @@ class _DrawingAppState extends State<DrawingApp> {
 
                                     if (line == null) return;
                                     drawingLines.add(line!);
+                                    drawingPointsHistory.add(line!);
                                   });
                                 case StrokeType.circle:
                                   setState(() {
@@ -417,7 +463,7 @@ class _DrawingAppState extends State<DrawingApp> {
 
                                     if (circle == null) return;
                                     drawingCircles.add(circle!);
-
+                                    drawingPointsHistory.add(circle!);
                                   });
 
                                 case StrokeType.rectangle:
@@ -432,6 +478,7 @@ class _DrawingAppState extends State<DrawingApp> {
 
                                     if (rectangle == null) return;
                                     drawingRectangles.add(rectangle!);
+                                    drawingPointsHistory.add(rectangle!);
                                   });
 
                                 case StrokeType.stroke:
@@ -446,7 +493,7 @@ class _DrawingAppState extends State<DrawingApp> {
 
                                     if (point == null) return;
                                     drawingPoints.add(point!);
-                                    drawingPointsHistory = List.of(drawingPoints);
+                                    drawingPointsHistory.add(point!);
                                   });
                               }
                              },
@@ -458,6 +505,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                     Offset end = details.localPosition;
                                     line?.updateEnd(end);
                                     drawingLines.last = line!;
+                                    drawingPointsHistory.last = line!;
                                   });
                                 case StrokeType.circle:
                                   setState(() {
@@ -467,7 +515,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                     double rad = (centre! - vector).distance;
                                     circle!.updateRadius(rad);
                                     drawingCircles.last = circle!;
-
+                                    drawingPointsHistory.last = circle!;
                                   });
 
                                 case StrokeType.rectangle:
@@ -476,6 +524,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                     Offset bottomRight = details.localPosition;
                                     rectangle?.updateRadius(bottomRight);
                                     drawingRectangles.last = rectangle!;
+                                    drawingPointsHistory.last = rectangle!;
                                   });
 
                                 case StrokeType.stroke:
@@ -488,7 +537,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                           ..add(details.localPosition)
                                     );
                                     drawingPoints.last = point!;
-                                    drawingPointsHistory = List.of(drawingPoints);
+                                    drawingPointsHistory.last = point!;
                                   });
                               }
                             },
