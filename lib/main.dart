@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +6,9 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:scribbletoart/services/drawing/drawing_point.dart';
 import 'dart:ui' as ui;
+
+import 'package:scribbletoart/services/drawing/painter.dart';
+import 'package:scribbletoart/utilities/colors.dart';
 
 
 void main() {
@@ -37,17 +39,6 @@ class _DrawingAppState extends State<DrawingApp> {
   var strokeColor = Colors.black;
   GlobalKey globalKey = GlobalKey();
 
-  var colors = <Color>[
-    Colors.black,
-    Colors.red,
-    Colors.yellow,
-    Colors.blue,
-    Colors.green,
-    Colors.purple,
-    Colors.orange,
-    Colors.pink,
-  ];
-
   Future<void> save() async {
     RenderRepaintBoundary boundary = globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
     ui.Image image = await boundary.toImage();
@@ -59,9 +50,9 @@ class _DrawingAppState extends State<DrawingApp> {
     }
 
     final result = await ImageGallerySaver.saveImage(
-      Uint8List.fromList(pngBytes),
-      quality: 60,
-      name: 'canvas_image'
+        Uint8List.fromList(pngBytes),
+        quality: 60,
+        name: 'canvas_image'
     );
 
     print(result);
@@ -91,7 +82,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: Image.asset('assets/imageIcons/pencil.png'),
                     onPressed: () {
-            
+                      setState(() {
+                        strokeColor = Colors.black;
+                      });
                     },
                   ),
                 ),
@@ -110,7 +103,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: Image.asset('assets/imageIcons/eraser.png'),
                     onPressed: () {
-                  
+                      setState(() {
+                        strokeColor = Colors.white;
+                      });
                     },
                   ),
                 ),
@@ -289,7 +284,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                   ),
                                 ),
                                 Card(
-                                  color: Color.fromRGBO(13, 14, 33, 100),
+                                  color: const Color.fromRGBO(13, 14, 33, 100),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -307,13 +302,15 @@ class _DrawingAppState extends State<DrawingApp> {
                                   ),
                                 ),
                                 Card(
-                                  color: Color.fromRGBO(13, 14, 33, 100),
+                                  color: const Color.fromRGBO(13, 14, 33, 100),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: ListTile(
                                     onTap: () {
-                          
+                                      setState(() {
+                                        drawingPoints.clear();
+                                      });
                                     },
                                     title: Text('Clear', style: TextStyle(color: Colors.white, fontFamily: 'Roboto')),
                                     trailing: Icon(Icons.clear, color: Colors.white,),
@@ -325,7 +322,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20),
-                                      gradient: LinearGradient(
+                                      gradient: const LinearGradient(
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [Color.fromRGBO(83, 0, 170, 100), Color.fromRGBO(172, 0, 76, 100)]
@@ -355,14 +352,14 @@ class _DrawingAppState extends State<DrawingApp> {
                                 save();
                               });
                             },
-                            child: Text('Download', style: TextStyle(color: Colors.white, fontFamily: 'Roboto'),),
+                            child: const Text('Download', style: TextStyle(color: Colors.white, fontFamily: 'Roboto'),),
                           ),
                         )
                       ],
                     ),
                     Expanded(
                       child: Scaffold(
-                        backgroundColor: Color.fromRGBO(220, 220, 228, 0),
+                        backgroundColor: const Color.fromRGBO(220, 220, 228, 0),
                         body: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
@@ -386,7 +383,7 @@ class _DrawingAppState extends State<DrawingApp> {
                                 drawingPoints.add(point!);
                                 drawingPointsHistory = List.of(drawingPoints);
                               });
-                            },
+                             },
                             onPanUpdate: (details) {
                               setState(() {
                                 if (point == null) return;
@@ -457,48 +454,5 @@ class _DrawingAppState extends State<DrawingApp> {
         ),
       ),
     );
-  }
-}
-
-
-class Painter extends CustomPainter {
-  final List<DrawingPoint> drawingPoints;
-
-  Painter({required this.drawingPoints});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final backgroundColor = Paint();
-    backgroundColor.color = Colors.white;
-
-    Rect rect = Rect.largest;
-    canvas.drawRect(rect, backgroundColor);
-
-    for (var drawingPoint in drawingPoints) {
-      final paint = Paint();
-      paint.color = drawingPoint.strokeColor;
-      paint.isAntiAlias = true;
-      paint.strokeWidth = drawingPoint.strokeWidth;
-      paint.strokeCap = StrokeCap.round;
-
-      for (var i = 0; i < drawingPoint.offsets.length; i++) {
-        var lastOffset = i == drawingPoint.offsets.length - 1;
-
-        if (lastOffset) {
-          // No point drawn
-        } else {
-          final start = drawingPoint.offsets[i];
-          final end = drawingPoint.offsets[i+1];
-          canvas.drawLine(start, end, paint);
-        }
-
-      }
-
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }
