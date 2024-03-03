@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,9 +7,9 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:scribbletoart/services/drawing/drawing_point.dart';
 import 'dart:ui' as ui;
-
 import 'package:scribbletoart/services/drawing/painter.dart';
 import 'package:scribbletoart/utilities/colors.dart';
+import 'package:scribbletoart/utilities/stroke_type.dart';
 
 
 void main() {
@@ -33,10 +34,13 @@ class DrawingApp extends StatefulWidget {
 
 class _DrawingAppState extends State<DrawingApp> {
   DrawingPoint? point;
+  DrawingCircle? circle;
+  var drawingCircles = <DrawingCircle>[];
   var drawingPointsHistory = <DrawingPoint>[];
   var drawingPoints = <DrawingPoint>[];
   var strokeWidth = 2.0;
   var strokeColor = Colors.black;
+  var strokeType = StrokeType.stroke;
   GlobalKey globalKey = GlobalKey();
 
   Future<void> save() async {
@@ -151,7 +155,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: SvgPicture.asset('assets/imageIcons/curve.svg', height: 50, width: 50,),
                     onPressed: () {
-
+                      setState(() {
+                        strokeType = StrokeType.stroke;
+                      });
                     },
                   ),
                 ),
@@ -189,7 +195,9 @@ class _DrawingAppState extends State<DrawingApp> {
                     color: Colors.pink,
                     icon: SvgPicture.asset('assets/imageIcons/circle.svg', height: 50, width: 50,),
                     onPressed: () {
-
+                      setState(() {
+                        strokeType = StrokeType.circle;
+                      });
                     },
                   ),
                 ),
@@ -371,39 +379,72 @@ class _DrawingAppState extends State<DrawingApp> {
                           ),
                           child: GestureDetector(
                             onPanStart: (details) {
-                              setState(() {
-                                point = DrawingPoint(
-                                  drawingId: DateTime.now().millisecondsSinceEpoch,
-                                  offsets: [details.localPosition],
-                                  strokeColor: strokeColor,
-                                  strokeWidth: strokeWidth,
-                                );
+                              switch (strokeType) {
+                                case StrokeType.circle:
+                                  setState(() {
+                                    // Creating circle object
+                                    circle = DrawingCircle(
+                                      drawingId: DateTime.now().millisecondsSinceEpoch,
+                                      centre: details.localPosition,
+                                      strokeColor: strokeColor,
+                                      strokeWidth: strokeWidth,
+                                    );
 
-                                if (point == null) return;
-                                drawingPoints.add(point!);
-                                drawingPointsHistory = List.of(drawingPoints);
-                              });
+                                    if (circle == null) return;
+                                    drawingCircles.add(circle!);
+
+                                  });
+                                case StrokeType.stroke:
+                                default:
+                                  setState(() {
+                                    point = DrawingPoint(
+                                      drawingId: DateTime.now().millisecondsSinceEpoch,
+                                      offsets: [details.localPosition],
+                                      strokeColor: strokeColor,
+                                      strokeWidth: strokeWidth,
+                                    );
+
+                                    if (point == null) return;
+                                    drawingPoints.add(point!);
+                                    drawingPointsHistory = List.of(drawingPoints);
+                                  });
+                              }
                              },
                             onPanUpdate: (details) {
-                              setState(() {
-                                if (point == null) return;
+                              switch (strokeType) {
+                                case StrokeType.circle:
+                                  setState(() {
+                                    if (circle == null) return;
+                                    Offset? centre = circle?.centre;
+                                    Offset vector = details.localPosition;
+                                    double rad = (centre! - vector).distance;
+                                    circle!.updateRadius(rad);
+                                    drawingCircles.last = circle!;
 
-                                point = point?.copyWith(
-                                    offsets: point!.offsets
-                                      ..add(details.localPosition)
-                                );
-                                drawingPoints.last = point!;
-                                drawingPointsHistory = List.of(drawingPoints);
-                              });
+                                  });
+                                case StrokeType.stroke:
+                                default:
+                                  setState(() {
+                                    if (point == null) return;
+
+                                    point = point?.copyWith(
+                                        offsets: point!.offsets
+                                          ..add(details.localPosition)
+                                    );
+                                    drawingPoints.last = point!;
+                                    drawingPointsHistory = List.of(drawingPoints);
+                                  });
+                              }
                             },
                             onPanEnd: (_) {
                               point = null;
+                              circle = null;
                             },
                             child: ClipRect(
                               child: RepaintBoundary(
                                 key: globalKey,
                                 child: CustomPaint(
-                                  painter: Painter(drawingPoints: drawingPoints),
+                                  painter: Painter(drawingPoints: drawingPoints, drawingCircles: drawingCircles),
                                   child: SizedBox(
                                     width: MediaQuery.of(context).size.width,
                                     height: MediaQuery.of(context).size.height,

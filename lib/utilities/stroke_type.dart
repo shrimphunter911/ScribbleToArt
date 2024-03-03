@@ -1,0 +1,1 @@
+enum StrokeType { stroke, circle, line, rectangle, triangle,}

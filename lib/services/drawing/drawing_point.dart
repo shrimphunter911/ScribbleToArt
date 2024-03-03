@@ -23,3 +23,23 @@ class DrawingPoint{
   }
 
 }
+
+class DrawingCircle{
+  int drawingId;
+  Offset? centre;
+  double radius;
+  Color strokeColor;
+  double strokeWidth;
+
+  DrawingCircle({
+    this.drawingId = -1,
+    this.centre,
+    this.radius = 0,
+    this.strokeColor = Colors.black,
+    this.strokeWidth = 2.0,
+  });
+
+  void updateRadius(double rad) {
+    radius = rad;
+  }
+}
